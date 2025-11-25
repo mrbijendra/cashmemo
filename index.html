@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Memo - Invoice System</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23667eea'/%3E%3Ctext x='50' y='70' font-size='60' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'%3ECC%3C/text%3E%3C/svg%3E">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&display=swap" rel="stylesheet">
+    <style>
+        /* === RESET & BASE === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+        }
+        
+        /* === LOGIN SCREEN === */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            width: 100vw;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(200, 230, 201, 0.3);
+            z-index: 0;
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-box h1 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .login-box h2 {
+            margin-bottom: 30px;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .login-box input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .login-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+        
+        .login-btn:hover {
+            background: #5568d3;
+        }
+        
+        .error-msg {
+            color: #f44336;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .error-msg.show {
+            display: block;
+        }
+        
+        /* === APP CONTAINER === */
+        .app-container {
+            display: none;
+        }
+        
+        .app-container.show {
+            display: block;
+        }
+        
+        /* === LOADING SPINNER === */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        }
+        
+        .loading.show {
+            display: flex;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* === MAIN LAYOUT === */
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        
+        .invoice-section {
+            flex: 0 0 800px;
+            max-width: 800px;
+        }
+        
+        .buttons-section {
+            flex: 0 0 280px;
+            position: sticky;
+            top: 20px;
+        }
+        
+        /* === INVOICE BOX === */
+        .invoice-container {
+            width: 100%;
+            background: white;
+            border: 3px solid #000 !important;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* === CANCELLED OVERLAY === */
+        .cancelled-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            overflow: hidden;
+        }
+        
+        .cancelled-overlay.show {
+            display: block;
+        }
+        
+        /* Big Red Cross */
+        .cancelled-cross {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .cancelled-cross::before,
+        .cancelled-cross::after {
+            content: '';
+            position: absolute;
+            background-color: rgba(255, 0, 0, 0.25);
+            top: 50%;
+            left: 50%;
+        }
+        
+        .cancelled-cross::before {
+            width: 140%;
+            height: 12px;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        
+        .cancelled-cross::after {
+            width: 140%;
+            height: 12px;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        
+        /* Watermark Text */
+        .cancelled-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 90px;
+            font-weight: bold;
+            color: rgba(255, 0, 0, 0.2);
+            letter-spacing: 8px;
+            text-align: center;
+            white-space: nowrap;
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            border: 6px solid rgba(255, 0, 0, 0.25);
+            padding: 30px 60px;
+            border-radius: 15px;
+        }
+        
+        /* === HEADER === */
+        .header {
+            border-bottom: 3px solid #000;
+            padding: 10px 15px;
+            background: white;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .cashmemo {
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid #000;
+            padding: 2px 8px;
+        }
+        
+        .mobile {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .shop-name {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 2px;
+            margin: 5px 0;
+        }
+        
+        .tagline {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            border: 2px solid #000;
+            padding: 3px;
+            margin: 5px 80px;
+        }
+        
+        .address {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        /* === CUSTOMER DETAILS === */
+        .customer-details {
+            border-bottom: 3px solid #000;
+            padding: 10px 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .detail-row label {
+            font-weight: bold;
+            min-width: 80px;
+            font-size: 14px;
+        }
+        
+        .detail-row input {
+            flex: 1;
+            border: none;
+            border-bottom: 1px dotted #000;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 2px 5px;
+            background: transparent;
+        }
+        
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .invoice-info input {
+            width: 120px;
+        }
+        
+        /* === TABLE === */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: white;
+            font-weight: bold;
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 14px;
+            border-bottom: 3px solid #000;
+        }
+        
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #000;
+            font-size: 13px;
+            vertical-align: top;
+        }
+        
+        .sno {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .particulars {
+            width: 45%;
+        }
+        
+        .qty {
+            width: 8%;
+            text-align: center;
+        }
+        
+        .rate {
+            width: 15%;
+            text-align: center;
+        }
+        
+        .rate input {
+            text-align: center;
+        }
+        
+        .amount {
+            width: 15%;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .action {
+            width: 10%;
+            text-align: center;
+        }
+        
+        .item-input {
+            width: 100%;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 2px;
+            background: transparent;
+        }
+        
+        .item-input:focus {
+            outline: 1px dashed #666;
+        }
+        
+        input:focus {
+            outline: 1px dashed #666;
+        }
+        
+        .number-input {
+            text-align: center;
+        }
+        
+        .rate-input {
+            text-align: center;
+        }
+        
+        .delete-btn {
+            background-color: #ff4444;
+            color: white;
+            border: 1px solid #000;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .delete-btn:hover {
+            background-color: #cc0000;
+        }
+        
+        /* === TOTAL SECTION === */
+        .total-section {
+            text-align: right;
+            padding: 15px;
+            border-top: 3px solid #000;
+            background: white;
+        }
+        
+        .total-row {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* === FOOTER === */
+        .footer {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 3px solid #000;
+        }
+        
+        .eoe {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .signature-section {
+            text-align: center;
+            position: relative;
+        }
+        
+        .signature-line {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .signature-display-text {
+            font-size: 24px;
+            font-family: 'Great Vibes', cursive;
+            color: #000;
+            font-weight: 400;
+            font-style: italic;
+            margin: 30px 0 5px 0;
+            padding: 0;
+        }
+        
+        /* === BUTTONS SECTION === */
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: white;
+            padding: 20px;
+            border: 3px solid #000;
+            border-radius: 5px;
+        }
+        
+        .btn-container-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #000;
+            background-color: #fff;
+            color: #000;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #000;
+            color: #fff;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn i {
+            margin-right: 5px;
+        }
+        
+        .btn-success {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        
+        .btn-success:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-danger {
+            background-color: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background-color: #da190b;
+        }
+        
+        .btn-primary {
+            background-color: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b7dda;
+        }
+        
+        /* === MODAL === */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 3% auto;
+            padding: 0;
+            border: 3px solid #000;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+            background-color: #000;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .close {
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 20px;
+        }
+        
+        .close:hover {
+            color: #ccc;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .history-table th {
+            background-color: #333;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #000;
+        }
+        
+        .history-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .history-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .view-btn {
+            padding: 6px 12px;
+            background-color: #2196F3;
+            color: white;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .view-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .delete-history-btn {
+            padding: 6px 12px;
+            background-color: #f44336;
+            color: white;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .delete-history-btn:hover {
+            background-color: #da190b;
+        }
+        
+        .cancel-btn {
+            padding: 6px 12px;
+            background-color: #ff9800;
+            color: white;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .cancelled-row {
+            background-color: #ffebee !important;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        
+        .cancelled-badge {
+            display: inline-block;
+            background-color: #f44336;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .no-history {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        /* === TOAST === */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 14px;
+            animation: slideIn 0.2s ease-out;
+        }
+        
+        .toast.show {
+            display: flex;
+        }
+        
+        .toast.error {
+            background-color: #f44336;
+        }
+        
+        .toast.warning {
+            background-color: #ff9800;
+        }
+        
+        .toast i {
+            font-size: 20px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        /* === MEDIA QUERIES === */
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            .btn-container, .buttons-section {
+                display: none !important;
+            }
+            .main-layout {
+                display: block;
+            }
+            .invoice-container {
+                border: 2px solid #000;
+                page-break-inside: avoid;
+            }
+            .delete-btn, .action {
+                display: none !important;
+            }
+            .cancelled-overlay {
+                display: none !important;
+            }
+            .cancelled-overlay.show {
+                display: block !important;
+            }
+            .loading {
+                display: none !important;
+            }
+            .toast {
+                display: none !important;
+            }
+        }
+        
+        @media screen and (max-width: 1100px) {
+            .main-layout {
+                flex-direction: column;
+                align-items: center;
+                padding: 10px;
+            }
+            
+            .invoice-section {
+                flex: 1;
+                max-width: 100%;
+            }
+            
+            .invoice-container {
+                max-width: 100%;
+            }
+            
+            .buttons-section {
+                width: 100%;
+                max-width: 100%;
+                position: relative;
+                margin-top: 20px;
+            }
+            
+            .btn-container {
+                max-width: 100%;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+            
+            .history-table {
+                font-size: 12px;
+            }
+            
+            .history-table th,
+            .history-table td {
+                padding: 8px 4px;
+            }
+            
+            .view-btn,
+            .cancel-btn,
+            .delete-history-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+                margin: 2px;
+            }
+            
+            .action-buttons {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            /* Login Mobile Fix */
+            .login-container {
+                padding: 15px;
+            }
+            
+            .login-box {
+                padding: 30px 20px;
+                max-width: 100%;
+            }
+            
+            .login-box h1 {
+                font-size: 26px;
+                margin-bottom: 8px;
+            }
+            
+            .login-box h2 {
+                font-size: 15px;
+                margin-bottom: 25px;
+            }
+            
+            .login-box input {
+                padding: 14px;
+                margin-bottom: 18px;
+                font-size: 16px;
+            }
+            
+            .login-btn {
+                padding: 16px;
+                font-size: 16px;
+                font-weight: bold;
+                width: 100%;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .login-btn:active {
+                transform: scale(0.98);
+            }
+            
+            .login-box .fa-lock {
+                font-size: 45px !important;
+                margin-bottom: 18px !important;
+            }
+            
+            .shop-name {
+                font-size: 24px;
+            }
+            
+            .tagline {
+                font-size: 14px;
+                margin: 5px 20px;
+            }
+            
+            .address {
+                font-size: 11px;
+            }
+            
+            .mobile {
+                font-size: 11px;
+            }
+            
+            .cashmemo {
+                font-size: 10px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                margin-bottom: 10px;
+            }
+            
+            .detail-row label {
+                min-width: auto;
+                margin-bottom: 3px;
+            }
+            
+            .invoice-info {
+                margin-left: 0 !important;
+                margin-top: 5px;
+            }
+            
+            table {
+                font-size: 11px;
+            }
+            
+            th, td {
+                padding: 5px 3px;
+            }
+            
+            .item-input {
+                font-size: 11px;
+            }
+            
+            .particulars {
+                width: 35%;
+            }
+            
+            .delete-btn {
+                padding: 3px 5px;
+                font-size: 10px;
+            }
+            
+            .total-section {
+                padding: 10px;
+            }
+            
+            .total-row {
+                font-size: 16px;
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .signature-display-text {
+                font-size: 20px;
+                margin: 20px 0 5px 0;
+            }
+            
+            .btn {
+                padding: 12px;
+                font-size: 13px;
+            }
+            
+            .btn-container-title {
+                font-size: 16px;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            /* Login Mobile Fix for Small Screens */
+            .login-container {
+                padding: 10px;
+            }
+            
+            .login-box {
+                padding: 25px 18px;
+            }
+            
+            .login-box h1 {
+                font-size: 22px;
+            }
+            
+            .login-box h2 {
+                font-size: 13px;
+                margin-bottom: 20px;
+            }
+            
+            .login-box input {
+                padding: 12px;
+                font-size: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .login-btn {
+                padding: 14px;
+                font-size: 15px;
+            }
+            
+            .login-box .fa-lock {
+                font-size: 40px !important;
+                margin-bottom: 15px !important;
+            }
+            
+            .shop-name {
+                font-size: 20px;
+                letter-spacing: 1px;
+            }
+            
+            .tagline {
+                font-size: 12px;
+                margin: 5px 10px;
+            }
+            
+            table {
+                font-size: 10px;
+            }
+            
+            th, td {
+                padding: 4px 2px;
+            }
+            
+            .sno {
+                width: 30px;
+            }
+            
+            .particulars {
+                width: 30%;
+            }
+            
+            .qty, .rate, .amount {
+                font-size: 10px;
+            }
+            
+            .signature-display-text {
+                font-size: 18px;
+            }
+            
+            .btn {
+                padding: 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- === LOGIN SCREEN === -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <i class="fas fa-lock" style="font-size: 50px; color: #667eea; margin-bottom: 20px;"></i>
+            <h1>CASH MEMO</h1>
+            <h2>Invoice Management System</h2>
+            <input type="email" id="emailInput" placeholder="Email Address" value="admin@cashmemosystem.com" readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+            <input type="password" id="passwordInput" placeholder="Enter Password" autocomplete="current-password" autofocus>
+            <button class="login-btn" onclick="loginUser()"><i class="fas fa-sign-in-alt"></i> Login</button>
+            <p class="error-msg" id="errorMsg"><i class="fas fa-exclamation-circle"></i> Wrong Password!</p>
+        </div>
+    </div>
+    
+    <!-- === MAIN APP === -->
+    <div id="appContainer" class="app-container">
+        
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <!-- Main Layout -->
+        <div class="main-layout">
+            
+            <!-- LEFT: Invoice Section -->
+            <div class="invoice-section">
+                <div class="invoice-container" id="invoiceContainer">
+                    
+                    <!-- Cancelled Overlay -->
+                    <div class="cancelled-overlay" id="cancelledOverlay">
+                        <div class="cancelled-cross"></div>
+                        <div class="cancelled-watermark">CANCELLED</div>
+                    </div>
+                    
+                    <!-- Header -->
+                    <div class="header">
+                        <div class="header-top">
+                            <div class="cashmemo">CASHMEMO</div>
+                            <div class="mobile">Mob.: +91 9598391000</div>
+                        </div>
+                        <div class="shop-name">INVOICE</div>
+                        <div class="tagline">SERVICES</div>
+                        <div class="address">Pt. DDU, 307, Ravi Nagar Road, Mughalsarai, U.P 232101</div>
+                    </div>
+                    
+                    <!-- Customer Details -->
+                    <div class="customer-details">
+                        <div class="detail-row">
+                            <label>Name..</label>
+                            <input type="text" id="customerName" placeholder="">
+                            <div class="invoice-info" style="margin-left: 20px;">
+                                <label>No.</label>
+                                <input type="text" id="invoiceNo" placeholder="">
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <label>Address</label>
+                            <input type="text" id="customerAddress" placeholder="">
+                            <div class="invoice-info" style="margin-left: 20px;">
+                                <label>Date.</label>
+                                <input type="date" id="invoiceDate">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Items Table -->
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="sno">S.<br>No.</th>
+                                <th class="particulars">PARTICULARS</th>
+                                <th class="qty">Qty.</th>
+                                <th class="rate">Rate</th>
+                                <th class="amount">Amount</th>
+                                <th class="action"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                            <tr>
+                                <td class="sno">1</td>
+                                <td class="particulars"><input type="text" class="item-input" placeholder=""></td>
+                                <td class="qty"><input type="number" class="item-input number-input qty-input" value="1" min="1"></td>
+                                <td class="rate"><input type="number" class="item-input rate-input" placeholder="0" min="0"></td>
+                                <td class="amount amt-display">0/-</td>
+                                <td class="action"><button class="delete-btn" onclick="deleteRow(this)"><i class="fas fa-times"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Add Item Button -->
+                    <div style="padding: 10px 15px;">
+                        <button onclick="addRow()" style="padding: 8px 20px; font-size: 13px; border: 2px solid #000; background: white; color: #000; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace;">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                    
+                    <!-- Total -->
+                    <div class="total-section">
+                        <div class="total-row">Total <span id="totalAmount">0</span>/-</div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="footer">
+                        <div class="eoe">E & O.E.</div>
+                        <div class="signature-section">
+                            <p class="signature-display-text">Sumit Mittal</p>
+                            <div class="signature-line">Signature</div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- RIGHT: Buttons Section -->
+            <div class="buttons-section">
+                <div class="btn-container">
+                    <div class="btn-container-title">ACTIONS</div>
+                    <button class="btn btn-primary" onclick="openHistory()"><i class="fas fa-history"></i> Old Invoices</button>
+                    <button class="btn btn-success" onclick="saveAndNext()"><i class="fas fa-save"></i> Save & Next</button>
+                    <button class="btn btn-danger" onclick="cancelInvoice()"><i class="fas fa-ban"></i> Cancel Invoice</button>
+                    <button class="btn" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                    <button class="btn" onclick="shareWhatsApp()"><i class="fab fa-whatsapp"></i> Share WhatsApp</button>
+                    <button class="btn" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                    <button class="btn" onclick="resetForm()"><i class="fas fa-redo"></i> Clear</button>
+                    <button class="btn" onclick="logoutUser()" style="background-color: #f44336; color: white; border-color: #f44336;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- === HISTORY MODAL === -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-invoice"></i> Old Invoices History</h2>
+                <span class="close" onclick="closeHistory()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="historyContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- === TOAST NOTIFICATION === -->
+    <div id="toast" class="toast">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+    
+    <!-- HTML2PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- === FIREBASE INTEGRATION === -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVe5gzbtQAdCRYi4tPXDAhcJ5I8F5TSLU",
+            authDomain: "corecomputer-40645.firebaseapp.com",
+            projectId: "corecomputer-40645",
+            storageBucket: "corecomputer-40645.firebasestorage.app",
+            messagingSenderId: "318437453249",
+            appId: "1:318437453249:web:da30c15b491eefb6945340",
+            measurementId: "G-PFYZDDME6Z"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        window.auth = auth;
+        window.db = db;
+        window.firestoreFunctions = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy };
+        window.authFunctions = { signInWithEmailAndPassword, signOut };
+        
+        console.log("✅ Firebase Connected!");
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("✅ User logged in:", user.email);
+                showApp();
+                loadLastInvoiceNumber();
+            } else {
+                console.log("❌ User not logged in");
+                showLogin();
+            }
+        });
+    </script>
+    
+    <!-- === LOGIN/LOGOUT FUNCTIONS === -->
+    <script>
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+        
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('show');
+        }
+        
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').classList.add('show');
+        }
+        
+        async function loginUser() {
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (!password) {
+                errorMsg.textContent = 'Password zaruri hai!';
+                errorMsg.classList.add('show');
+                setTimeout(() => errorMsg.classList.remove('show'), 3000);
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                await window.authFunctions.signInWithEmailAndPassword(window.auth, email, password);
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error("❌ Login Error:", error.code);
+                
+                let errorMessage = 'Wrong Password!';
+                
+                switch(error.code) {
+                    case 'auth/wrong-password':
+                    case 'auth/invalid-credential':
+                        errorMessage = 'Wrong Password!';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many attempts! Try later.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Network error! Check internet.';
+                        break;
+                    default:
+                        errorMessage = 'Login failed! Try again.';
+                }
+                
+                errorMsg.textContent = errorMessage;
+                errorMsg.classList.add('show');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+                setTimeout(() => errorMsg.classList.remove('show'), 3000);
+            }
+        }
+        
+        async function logoutUser() {
+            if (confirm('Kya aap logout karna chahte hain?')) {
+                showLoading();
+                try {
+                    await window.authFunctions.signOut(window.auth);
+                    hideLoading();
+                    showToast('Logged out successfully!', 'success');
+                } catch (error) {
+                    hideLoading();
+                    console.error("❌ Logout Error:", error);
+                    showToast('Logout failed!', 'error');
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('passwordInput');
+            
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') loginUser();
+                });
+            }
+        });
+        
+        window.loginUser = loginUser;
+        window.logoutUser = logoutUser;
+    </script>
+    
+    <!-- === MAIN APPLICATION SCRIPT === -->
+    <script>
+        // Set Indian Standard Time (IST)
+        function getIndianDate() {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            const istTime = new Date(now.getTime() + istOffset);
+            const year = istTime.getUTCFullYear();
+            const month = String(istTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(istTime.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        document.getElementById('invoiceDate').value = getIndianDate();
+        let currentInvoiceNo = 1;
+        let currentEditingId = null;
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            if (type === 'success') {
+                toastIcon.className = 'fas fa-check-circle';
+                toast.className = 'toast show';
+            } else if (type === 'error') {
+                toastIcon.className = 'fas fa-exclamation-circle';
+                toast.className = 'toast show error';
+            } else if (type === 'warning') {
+                toastIcon.className = 'fas fa-exclamation-triangle';
+                toast.className = 'toast show warning';
+            }
+            
+            toastMessage.textContent = message;
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.2s ease-out';
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.style.animation = '';
+                }, 200);
+            }, 1500);
+        }
+        
+        window.showToast = showToast;
+        
+        async function loadLastInvoiceNumber() {
+            try {
+                const q = window.firestoreFunctions.query(
+                    window.firestoreFunctions.collection(window.db, 'invoices'),
+                    window.firestoreFunctions.orderBy('savedAt', 'desc')
+                );
+                const querySnapshot = await window.firestoreFunctions.getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    let maxInvoiceNo = 0;
+                    let maxInvoiceStr = '';
+                    let hasLeadingZero = false;
+                    let maxLength = 0;
+                    
+                    querySnapshot.forEach((docSnap) => {
+                        const inv = docSnap.data();
+                        const invoiceStr = inv.invoiceNo.toString();
+                        const invoiceNum = parseInt(invoiceStr);
+                        
+                        if (invoiceNum > maxInvoiceNo) {
+                            maxInvoiceNo = invoiceNum;
+                            maxInvoiceStr = invoiceStr;
+                            hasLeadingZero = invoiceStr.charAt(0) === '0';
+                            maxLength = invoiceStr.length;
+                        }
+                    });
+                    
+                    const nextNumeric = maxInvoiceNo + 1;
+                    
+                    if (hasLeadingZero) {
+                        currentInvoiceNo = nextNumeric.toString().padStart(maxLength, '0');
+                    } else {
+                        currentInvoiceNo = nextNumeric.toString();
+                    }
+                    
+                    document.getElementById('invoiceNo').value = currentInvoiceNo;
+                } else {
+                    document.getElementById('invoiceNo').value = currentInvoiceNo;
+                }
+            } catch (error) {
+                console.log("No previous invoices");
+                document.getElementById('invoiceNo').value = currentInvoiceNo;
+            }
+        }
+        
+        document.getElementById('invoiceNo').addEventListener('input', function() {
+            currentInvoiceNo = this.value;
+        });
+        
+        async function saveInvoice() {
+            const invoiceNo = document.getElementById('invoiceNo').value;
+            const customerName = document.getElementById('customerName').value;
+            const customerAddress = document.getElementById('customerAddress').value;
+            const invoiceDate = document.getElementById('invoiceDate').value;
+            
+            if (!customerName || !invoiceNo) {
+                showToast('Customer name aur Invoice number zaruri hai!', 'error');
+                return false;
+            }
+            
+            try {
+                const querySnapshot = await window.firestoreFunctions.getDocs(
+                    window.firestoreFunctions.collection(window.db, 'invoices')
+                );
+                
+                let isDuplicate = false;
+                querySnapshot.forEach((docSnap) => {
+                    const inv = docSnap.data();
+                    if (inv.invoiceNo === invoiceNo && docSnap.id !== currentEditingId) {
+                        isDuplicate = true;
+                    }
+                });
+                
+                if (isDuplicate) {
+                    showToast(`Invoice No. ${invoiceNo} already exists!`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error checking duplicate:", error);
+            }
+            
+            const items = [];
+            const rows = document.getElementById('itemsBody').rows;
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const particulars = row.querySelector('.item-input').value;
+                
+                if (particulars) {
+                    items.push({
+                        particulars,
+                        qty: row.querySelector('.qty-input').value,
+                        rate: row.querySelector('.rate-input').value,
+                        amount: row.querySelector('.amt-display').textContent.replace('/-', '')
+                    });
+                }
+            }
+            
+            const total = document.getElementById('totalAmount').textContent;
+            
+            const invoice = {
+                invoiceNo,
+                customerName,
+                customerAddress,
+                invoiceDate,
+                items,
+                total,
+                savedAt: new Date().toISOString(),
+                status: 'active'
+            };
+            
+            showLoading();
+            
+            try {
+                if (currentEditingId) {
+                    await window.firestoreFunctions.updateDoc(
+                        window.firestoreFunctions.doc(window.db, 'invoices', currentEditingId),
+                        invoice
+                    );
+                    showToast('Updated! ✓', 'success');
+                } else {
+                    await window.firestoreFunctions.addDoc(
+                        window.firestoreFunctions.collection(window.db, 'invoices'),
+                        invoice
+                    );
+                    showToast('Saved! ✓', 'success');
+                }
+                
+                currentEditingId = null;
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.error("Error:", error);
+                showToast('Save failed!', 'error');
+                hideLoading();
+                return false;
+            }
+        }
+        
+        async function saveAndNext() {
+            if (await saveInvoice()) {
+                nextInvoice();
+            }
+        }
+        
+        async function cancelInvoice() {
+            const invoiceNo = document.getElementById('invoiceNo').value;
+            const customerName = document.getElementById('customerName').value;
+            
+            if (!customerName || !invoiceNo) {
+                showToast('Invoice details incomplete!', 'error');
+                return;
+            }
+            
+            if (!confirm('Kya aap is invoice ko cancel karna chahte hain?')) return;
+            
+            let existingInvoiceId = null;
+            try {
+                const querySnapshot = await window.firestoreFunctions.getDocs(
+                    window.firestoreFunctions.collection(window.db, 'invoices')
+                );
+                
+                querySnapshot.forEach((docSnap) => {
+                    const inv = docSnap.data();
+                    if (inv.invoiceNo === invoiceNo && inv.status === 'active') {
+                        existingInvoiceId = docSnap.id;
+                    }
+                });
+            } catch (error) {
+                console.error("Error checking invoice:", error);
+            }
+            
+            const items = [];
+            const rows = document.getElementById('itemsBody').rows;
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const particulars = row.querySelector('.item-input').value;
+                
+                if (particulars) {
+                    items.push({
+                        particulars,
+                        qty: row.querySelector('.qty-input').value,
+                        rate: row.querySelector('.rate-input').value,
+                        amount: row.querySelector('.amt-display').textContent.replace('/-', '')
+                    });
+                }
+            }
+            
+            showLoading();
+            
+            try {
+                if (existingInvoiceId) {
+                    await window.firestoreFunctions.updateDoc(
+                        window.firestoreFunctions.doc(window.db, 'invoices', existingInvoiceId),
+                        {
+                            status: 'cancelled',
+                            cancelledAt: new Date().toISOString()
+                        }
+                    );
+                } else {
+                    const invoice = {
+                        invoiceNo,
+                        customerName,
+                        customerAddress: document.getElementById('customerAddress').value,
+                        invoiceDate: document.getElementById('invoiceDate').value,
+                        items,
+                        total: document.getElementById('totalAmount').textContent,
+                        savedAt: new Date().toISOString(),
+                        status: 'cancelled',
+                        cancelledAt: new Date().toISOString()
+                    };
+                    
+                    await window.firestoreFunctions.addDoc(
+                        window.firestoreFunctions.collection(window.db, 'invoices'),
+                        invoice
+                    );
+                }
+                
+                document.getElementById('cancelledOverlay').classList.add('show');
+                
+                showToast('Invoice Cancelled!', 'warning');
+                hideLoading();
+                setTimeout(() => {
+                    document.getElementById('cancelledOverlay').classList.remove('show');
+                    nextInvoice();
+                }, 2000);
+            } catch (error) {
+                console.error("Error:", error);
+                showToast('Cancel failed!', 'error');
+                hideLoading();
+            }
+        }
+        
+        function nextInvoice() {
+            const currentNo = document.getElementById('invoiceNo').value;
+            
+            document.getElementById('cancelledOverlay').classList.remove('show');
+            
+            const hasLeadingZero = currentNo.charAt(0) === '0';
+            const numericPart = parseInt(currentNo);
+            const nextNumeric = numericPart + 1;
+            
+            if (hasLeadingZero) {
+                currentInvoiceNo = nextNumeric.toString().padStart(currentNo.length, '0');
+            } else {
+                currentInvoiceNo = nextNumeric.toString();
+            }
+            
+            currentEditingId = null;
+            document.getElementById('invoiceNo').value = currentInvoiceNo;
+            
+            document.getElementById('invoiceDate').value = getIndianDate();
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerAddress').value = '';
+            
+            const tbody = document.getElementById('itemsBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td class="sno">1</td>
+                    <td class="particulars"><input type="text" class="item-input" placeholder=""></td>
+                    <td class="qty"><input type="number" class="item-input number-input qty-input" value="1" min="1"></td>
+                    <td class="rate"><input type="number" class="item-input rate-input" placeholder="0" min="0"></td>
+                    <td class="amount amt-display">0/-</td>
+                    <td class="action"><button class="delete-btn" onclick="deleteRow(this)"><i class="fas fa-times"></i></button></td>
+                </tr>
+            `;
+            
+            attachEventListeners(tbody.rows[0]);
+            calculateTotal();
+        }
+        
+        async function openHistory() {
+            showLoading();
+            
+            try {
+                const q = window.firestoreFunctions.query(
+                    window.firestoreFunctions.collection(window.db, 'invoices'),
+                    window.firestoreFunctions.orderBy('savedAt', 'desc')
+                );
+                const querySnapshot = await window.firestoreFunctions.getDocs(q);
+                
+                const historyContent = document.getElementById('historyContent');
+                
+                if (querySnapshot.empty) {
+                    historyContent.innerHTML = '<div class="no-history"><i class="fas fa-inbox"></i><br><br>Abhi tak koi invoice save nahi hui hai.</div>';
+                } else {
+                    let html = '<table class="history-table"><thead><tr><th>Invoice No.</th><th>Customer Name</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                    
+                    querySnapshot.forEach((docSnap) => {
+                        const inv = docSnap.data();
+                        const rowClass = inv.status === 'cancelled' ? 'cancelled-row' : '';
+                        const statusBadge = inv.status === 'cancelled' ? '<span class="cancelled-badge">CANCELLED</span>' : '';
+                        const cancelBtn = inv.status !== 'cancelled' ? `<button class="cancel-btn" onclick="markAsCancelled('${docSnap.id}')"><i class="fas fa-ban"></i> Cancel</button>` : '';
+                        
+                        html += `
+                            <tr class="${rowClass}">
+                                <td>${inv.invoiceNo} ${statusBadge}</td>
+                                <td>${inv.customerName}</td>
+                                <td>${new Date(inv.invoiceDate).toLocaleDateString('en-GB')}</td>
+                                <td>₹${inv.total}/-</td>
+                                <td>${inv.status === 'cancelled' ? '<span style="color: #f44336;">Cancelled</span>' : '<span style="color: #4CAF50;">Active</span>'}</td>
+                                <td>
+                                    <button class="view-btn" onclick="viewInvoice('${docSnap.id}')"><i class="fas fa-eye"></i> View</button>
+                                    ${cancelBtn}
+                                    <button class="delete-history-btn" onclick="deleteInvoice('${docSnap.id}')"><i class="fas fa-trash"></i> Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    historyContent.innerHTML = html;
+                }
+                
+                hideLoading();
+                document.getElementById('historyModal').style.display = 'block';
+            } catch (error) {
+                console.error("Error:", error);
+                showToast('Failed to load history!', 'error');
+                hideLoading();
+            }
+        }
+        
+        function closeHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+        
+        async function viewInvoice(invoiceId) {
+            showLoading();
+            
+            try {
+                const querySnapshot = await window.firestoreFunctions.getDocs(
+                    window.firestoreFunctions.collection(window.db, 'invoices')
+                );
+                
+                let invoice = null;
+                let docId = null;
+                
+                querySnapshot.forEach((docSnap) => {
+                    if (docSnap.id === invoiceId) {
+                        invoice = docSnap.data();
+                        docId = docSnap.id;
+                    }
+                });
+                
+                if (!invoice) {
+                    hideLoading();
+                    return;
+                }
+                
+                currentEditingId = docId;
+                
+                document.getElementById('invoiceNo').value = invoice.invoiceNo;
+                document.getElementById('customerName').value = invoice.customerName;
+                document.getElementById('customerAddress').value = invoice.customerAddress;
+                document.getElementById('invoiceDate').value = invoice.invoiceDate;
+                
+                const tbody = document.getElementById('itemsBody');
+                tbody.innerHTML = '';
+                
+                invoice.items.forEach((item, i) => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td class="sno">${i + 1}</td>
+                        <td class="particulars"><input type="text" class="item-input" value="${item.particulars}"></td>
+                        <td class="qty"><input type="number" class="item-input number-input qty-input" value="${item.qty}" min="1"></td>
+                        <td class="rate"><input type="number" class="item-input rate-input" value="${item.rate}" min="0"></td>
+                        <td class="amount amt-display">${item.amount}/-</td>
+                        <td class="action"><button class="delete-btn" onclick="deleteRow(this)"><i class="fas fa-times"></i></button></td>
+                    `;
+                    attachEventListeners(row);
+                });
+                
+                calculateTotal();
+                
+                if (invoice.status === 'cancelled') {
+                    document.getElementById('cancelledOverlay').classList.add('show');
+                } else {
+                    document.getElementById('cancelledOverlay').classList.remove('show');
+                }
+                
+                closeHistory();
+                hideLoading();
+            } catch (error) {
+                console.error("Error:", error);
+                showToast('Failed to load invoice!', 'error');
+                hideLoading();
+            }
+        }
+        
+        async function deleteInvoice(invoiceId) {
+            if (confirm('Kya aap is invoice ko delete karna chahte hain?')) {
+                showLoading();
+                
+                try {
+                    await window.firestoreFunctions.deleteDoc(
+                        window.firestoreFunctions.doc(window.db, 'invoices', invoiceId)
+                    );
+                    showToast('Invoice deleted!', 'success');
+                    hideLoading();
+                    openHistory();
+                } catch (error) {
+                    console.error("Error:", error);
+                    showToast('Delete failed!', 'error');
+                    hideLoading();
+                }
+            }
+        }
+        
+        async function markAsCancelled(invoiceId) {
+            if (confirm('Kya aap is invoice ko cancel karna chahte hain?')) {
+                showLoading();
+                
+                try {
+                    await window.firestoreFunctions.updateDoc(
+                        window.firestoreFunctions.doc(window.db, 'invoices', invoiceId),
+                        {
+                            status: 'cancelled',
+                            cancelledAt: new Date().toISOString()
+                        }
+                    );
+                    showToast('Invoice cancelled!', 'warning');
+                    hideLoading();
+                    openHistory();
+                } catch (error) {
+                    console.error("Error:", error);
+                    showToast('Cancel failed!', 'error');
+                    hideLoading();
+                }
+            }
+        }
+        
+        function calculateAmount(row) {
+            const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+            const rate = parseFloat(row.querySelector('.rate-input').value) || 0;
+            const amount = qty * rate;
+            row.querySelector('.amt-display').textContent = amount.toFixed(0) + '/-';
+            calculateTotal();
+        }
+        
+        function calculateTotal() {
+            const amounts = document.querySelectorAll('.amt-display');
+            let total = 0;
+            amounts.forEach(amt => {
+                const value = amt.textContent.replace('/-', '');
+                total += parseFloat(value) || 0;
+            });
+            document.getElementById('totalAmount').textContent = total.toFixed(0);
+        }
+        
+        function addRow() {
+            const tbody = document.getElementById('itemsBody');
+            const rowCount = tbody.rows.length;
+            const newRow = tbody.insertRow();
+            
+            newRow.innerHTML = `
+                <td class="sno">${rowCount + 1}</td>
+                <td class="particulars"><input type="text" class="item-input" placeholder=""></td>
+                <td class="qty"><input type="number" class="item-input number-input qty-input" value="1" min="1"></td>
+                <td class="rate"><input type="number" class="item-input rate-input" placeholder="0" min="0"></td>
+                <td class="amount amt-display">0/-</td>
+                <td class="action"><button class="delete-btn" onclick="deleteRow(this)"><i class="fas fa-times"></i></button></td>
+            `;
+            
+            attachEventListeners(newRow);
+        }
+        
+        function deleteRow(btn) {
+            const tbody = document.getElementById('itemsBody');
+            if (tbody.rows.length > 1) {
+                const row = btn.closest('tr');
+                row.remove();
+                updateSerialNumbers();
+                calculateTotal();
+            } else {
+                showToast('Kam se kam ek item hona chahiye!', 'warning');
+            }
+        }
+        
+        function updateSerialNumbers() {
+            const tbody = document.getElementById('itemsBody');
+            Array.from(tbody.rows).forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+        }
+        
+        function attachEventListeners(row) {
+            row.querySelector('.qty-input').addEventListener('input', () => calculateAmount(row));
+            row.querySelector('.rate-input').addEventListener('input', () => calculateAmount(row));
+        }
+        
+        function resetForm() {
+            if (confirm('Kya aap form clear karna chahte hain?')) {
+                currentEditingId = null;
+                document.getElementById('customerName').value = '';
+                document.getElementById('customerAddress').value = '';
+                document.getElementById('invoiceDate').value = getIndianDate();
+                
+                const tbody = document.getElementById('itemsBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="sno">1</td>
+                        <td class="particulars"><input type="text" class="item-input" placeholder=""></td>
+                        <td class="qty"><input type="number" class="item-input number-input qty-input" value="1" min="1"></td>
+                        <td class="rate"><input type="number" class="item-input rate-input" placeholder="0" min="0"></td>
+                        <td class="amount amt-display">0/-</td>
+                        <td class="action"><button class="delete-btn" onclick="deleteRow(this)"><i class="fas fa-times"></i></button></td>
+                    </tr>
+                `;
+                
+                attachEventListeners(tbody.rows[0]);
+                calculateTotal();
+            }
+        }
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('historyModal');
+            if (event.target == modal) closeHistory();
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstRow = document.getElementById('itemsBody').rows[0];
+            attachEventListeners(firstRow);
+        });
+        
+        window.saveAndNext = saveAndNext;
+        window.cancelInvoice = cancelInvoice;
+        window.openHistory = openHistory;
+        window.closeHistory = closeHistory;
+        window.viewInvoice = viewInvoice;
+        window.deleteInvoice = deleteInvoice;
+        window.markAsCancelled = markAsCancelled;
+        window.addRow = addRow;
+        window.deleteRow = deleteRow;
+        window.resetForm = resetForm;
+        
+        async function downloadPDF() {
+            const invoiceNo = document.getElementById('invoiceNo').value || 'Invoice';
+            const customerName = document.getElementById('customerName').value || 'Customer';
+            
+            if (!invoiceNo || !customerName) {
+                showToast('Please fill invoice details!', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            const buttonsSection = document.querySelector('.buttons-section');
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            const actionColumn = document.querySelectorAll('.action');
+            const originalDisplay = buttonsSection.style.display;
+            
+            buttonsSection.style.display = 'none';
+            deleteButtons.forEach(btn => btn.style.display = 'none');
+            actionColumn.forEach(col => col.style.display = 'none');
+            
+            const element = document.querySelector('.invoice-container');
+            const originalBorder = element.style.border;
+            const originalMaxWidth = element.style.maxWidth;
+            
+            element.style.border = '2px solid #000';
+            element.style.maxWidth = '100%';
+            
+            const opt = {
+                margin: [15, 15, 15, 15],
+                filename: `Invoice_${invoiceNo}_${customerName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true,
+                    logging: false
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { mode: 'avoid-all' }
+            };
+            
+            try {
+                await html2pdf().set(opt).from(element).save();
+                showToast('PDF Downloaded! ✓', 'success');
+            } catch (error) {
+                console.error('PDF Error:', error);
+                showToast('PDF download failed!', 'error');
+            }
+            
+            element.style.border = originalBorder;
+            element.style.maxWidth = originalMaxWidth;
+            buttonsSection.style.display = originalDisplay;
+            deleteButtons.forEach(btn => btn.style.display = 'inline-block');
+            actionColumn.forEach(col => col.style.display = 'table-cell');
+            hideLoading();
+        }
+        
+        async function shareWhatsApp() {
+            const invoiceNo = document.getElementById('invoiceNo').value;
+            const customerName = document.getElementById('customerName').value;
+            const total = document.getElementById('totalAmount').textContent;
+            
+            if (!invoiceNo || !customerName) {
+                showToast('Please fill invoice details!', 'error');
+                return;
+            }
+            
+            showLoading();
+            showToast('Generating PDF...', 'success');
+            
+            const buttonsSection = document.querySelector('.buttons-section');
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            const actionColumn = document.querySelectorAll('.action');
+            const originalDisplay = buttonsSection.style.display;
+            
+            buttonsSection.style.display = 'none';
+            deleteButtons.forEach(btn => btn.style.display = 'none');
+            actionColumn.forEach(col => col.style.display = 'none');
+            
+            const element = document.querySelector('.invoice-container');
+            const originalBorder = element.style.border;
+            const originalMaxWidth = element.style.maxWidth;
+            
+            element.style.border = '2px solid #000';
+            element.style.maxWidth = '100%';
+            
+            const opt = {
+                margin: [15, 15, 15, 15],
+                filename: `Invoice_${invoiceNo}_${customerName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true,
+                    logging: false
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { mode: 'avoid-all' }
+            };
+            
+            try {
+                const pdf = await html2pdf().set(opt).from(element).toPdf().get('pdf');
+                const pdfBlob = pdf.output('blob');
+                
+                element.style.border = originalBorder;
+                element.style.maxWidth = originalMaxWidth;
+                
+                const file = new File([pdfBlob], `Invoice_${invoiceNo}_${customerName}.pdf`, { type: 'application/pdf' });
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: `Invoice ${invoiceNo}`,
+                        text: `Invoice for ${customerName} - Total: ₹${total}/-`
+                    });
+                    showToast('Shared successfully!', 'success');
+                } else {
+                    const url = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Invoice_${invoiceNo}_${customerName}.pdf`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    const message = `*Invoice ${invoiceNo}*\nCustomer: ${customerName}\nTotal: ₹${total}/-\n\nPDF downloaded. Please attach manually.`;
+                    const whatsappURL = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappURL, '_blank');
+                    
+                    showToast('PDF downloaded! Attach in WhatsApp', 'success');
+                }
+            } catch (error) {
+                console.error('Share Error:', error);
+                showToast('Share failed! Use Download PDF instead', 'error');
+                
+                element.style.border = originalBorder;
+                element.style.maxWidth = originalMaxWidth;
+            }
+            
+            buttonsSection.style.display = originalDisplay;
+            deleteButtons.forEach(btn => btn.style.display = 'inline-block');
+            actionColumn.forEach(col => col.style.display = 'table-cell');
+            hideLoading();
+        }
+        
+        window.downloadPDF = downloadPDF;
+        window.shareWhatsApp = shareWhatsApp;
+    </script>
+    
+</body>
+</html>
